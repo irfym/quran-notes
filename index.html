@@ -13,15 +13,22 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <div id="surah-selector-container">
+    <label for="surah-selector">Select Surah:</label>
+    <select id="surah-selector" class="form-select">
+      <option value="">Select Surah...</option>
+      <!-- Surah options will be loaded dynamically -->
+    </select>
+  </div>
   <div class="container-fluid h-100">
     <div class="row h-100">
       <!-- Arabic Pane -->
       <div class="col-md p-0" id="arabic-pane">
         <div class="surah-header">
-          <select id="surah-selector" class="form-select">
-            <option value="">Select Surah...</option>
-            <!-- Surah options will be loaded here -->
-          </select>
+          <label for="verse-selector">Jump to Verse:</label>
+            <select id="verse-selector">
+                <option value="" disabled selected>Select a verse</option>
+            </select>
           <div class="surah-name" id="arabic-surah-name"></div>
           <div class="surah-info" id="arabic-surah-info"></div>
         </div>
