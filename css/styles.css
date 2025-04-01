@@ -19,10 +19,17 @@ body {
     color: #000;
     direction: rtl;
     font-family: 'KFGQPC Uthmanic Script', 'Amiri Quran', 'Scheherazade New', serif;
-    font-size: 28px; /* Adjust as needed */
+    font-size: 28px;
     direction: rtl;
     text-align: right;
     line-height: 2.5;
+}
+
+#arabic-pane label {
+    font-size: 14px;  
+    font-weight: normal;
+    margin-right: 5px;
+    color: #333;
 }
 
 #translation-pane {
@@ -55,7 +62,16 @@ body {
 
 .verse.selected {
     background-color: rgba(70, 130, 180, 0.2);
-    font-weight: bold;
+}
+
+#verse-selector {
+    width: 120px;  /* Set a smaller width */
+    padding: 4px;  /* Reduce padding */
+    font-size: 14px;  /* Make text smaller */
+    border-radius: 5px;  /* Slightly rounded edges */
+    border: 1px solid #ccc;  /* Light border */
+    background-color: #f9f9f9;  /* Light background */
+    cursor: pointer;
 }
 
 .verse-number {

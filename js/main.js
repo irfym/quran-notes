@@ -194,8 +194,14 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
     // Update panes
     const arabicPane = document.getElementById('arabic-text');
     const translationPane = document.getElementById('translation-text');
+    const verseSelector = document.getElementById('verse-selector'); // Get dropdown
     if (arabicPane) arabicPane.innerHTML = '';
     if (translationPane) translationPane.innerHTML = '';
+
+    // Clear previous content
+    if (arabicPane) arabicPane.innerHTML = '';
+    if (translationPane) translationPane.innerHTML = '';
+    if (verseSelector) verseSelector.innerHTML = '<option value="" disabled selected>Select a verse</option>';
 
     // Add Arabic verses
     if (arabicPane) {
@@ -215,6 +221,21 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
         arabicVerse.addEventListener("click", () => highlightTranslationVerse(verseNumber));
     
         arabicPane.appendChild(arabicVerse);
+
+        // Populate dropdown with verse numbers
+        if (verseSelector) {
+          const option = document.createElement("option");
+          option.value = verseNumber;
+          option.textContent = `Verse ${verseNumber}`;
+          verseSelector.appendChild(option);
+        }
+      });
+    }
+
+    // Add event listener for dropdown to scroll to selected verse
+    if (verseSelector) {
+      verseSelector.addEventListener("change", (event) => {
+        highlightArabicVerse(event.target.value);
       });
     }
 
