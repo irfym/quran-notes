@@ -21,7 +21,7 @@
         #arabic-pane {
             background-color: #f8f5ee;
             direction: rtl;
-            font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade New', 'Lateef', serif;
+            font-family: 'Scheherazade New', 'me_quran', 'Lateef', serif;
             font-size: 22px;
             line-height: 2.5;
         }
@@ -185,10 +185,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Resize Handle -->
             <div class="resize-handle" id="resize-handle-1"></div>
-            
+
             <!-- Translation Pane -->
             <div class="col-md p-0" id="translation-pane">
                 <div class="surah-header">
@@ -211,20 +211,20 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Resize Handle -->
             <div class="resize-handle" id="resize-handle-2"></div>
-            
+
             <!-- Notes Pane -->
             <div class="col-md p-0" id="notes-pane">
                 <div class="p-3">
                     <h4>Notes for <span id="current-surah-info">Select a surah</span></h4>
-                    
+
                     <div class="d-flex mb-3">
                         <button class="tab-button active" data-tab="editor">Editor</button>
                         <button class="tab-button" data-tab="preview">Preview</button>
                     </div>
-                    
+
                     <div class="editor-toolbar">
                         <button title="Bold" data-command="bold"><i class="fas fa-bold"></i></button>
                         <button title="Italic" data-command="italic"><i class="fas fa-italic"></i></button>
@@ -236,11 +236,11 @@
                         <button title="List" data-command="unorderedList"><i class="fas fa-list-ul"></i></button>
                         <button title="Numbered List" data-command="orderedList"><i class="fas fa-list-ol"></i></button>
                     </div>
-                    
+
                     <div class="tab-content active" id="editor-tab">
                         <textarea id="notes-editor" placeholder="Write your notes here in Markdown format..."></textarea>
                     </div>
-                    
+
                     <div class="tab-content" id="preview-tab">
                         <div id="notes-preview"></div>
                     </div>
@@ -289,7 +289,7 @@
         function showLoadingState() {
             const arabicPane = document.getElementById('arabic-text');
             const translationPane = document.getElementById('translation-text');
-            
+
             if (arabicPane) {
                 arabicPane.innerHTML = `
                     <div class="text-center py-5">
@@ -298,7 +298,7 @@
                     </div>
                 `;
             }
-            
+
             if (translationPane) {
                 translationPane.innerHTML = `
                     <div class="text-center py-5">
@@ -312,7 +312,7 @@
         function showErrorState(message = 'Error loading data', showRetry = false) {
             const arabicPane = document.getElementById('arabic-text');
             const translationPane = document.getElementById('translation-text');
-            
+
             if (arabicPane) {
                 arabicPane.innerHTML = `
                     <div class="text-center py-5 text-danger">
@@ -322,7 +322,7 @@
                     </div>
                 `;
             }
-            
+
             if (translationPane) {
                 translationPane.innerHTML = `
                     <div class="text-center py-5 text-danger">
@@ -337,14 +337,14 @@
             try {
                 showLoadingState();
                 const response = await fetch(`${API_BASE_URL}/chapters?language=en`);
-                
+
                 if (!response.ok) throw new Error("Failed to fetch surah list");
-                
+
                 const data = await response.json();
                 const surahSelector = document.getElementById('surah-selector');
                 if (surahSelector) {
                     surahSelector.innerHTML = '<option value="">Select Surah...</option>';
-                    
+
                     data.chapters.forEach(surah => {
                         const option = document.createElement('option');
                         option.value = surah.id;
@@ -352,7 +352,7 @@
                         surahSelector.appendChild(option);
                     });
                 }
-                
+
             } catch (error) {
                 console.error('Error loading surah list:', error);
                 showErrorState('Failed to load surah list. Please try again later.', true);
@@ -371,14 +371,14 @@
         async function loadSurah(surahNumber) {
             try {
                 showLoadingState();
-                
+
                 const translationId = document.getElementById('translation-select').value;
-                
+
                 const [arabicResponse, translationResponse] = await Promise.all([
                     fetch(`${API_BASE_URL}/quran/verses/uthmani?chapter_number=${surahNumber}`),
                     fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}`)
                 ]);
-                
+
                 if (!arabicResponse.ok) throw new Error(`Arabic request failed: ${arabicResponse.status}`);
                 if (!translationResponse.ok) throw new Error(`Translation request failed: ${translationResponse.status}`);
 
@@ -390,7 +390,7 @@
 
                 updateSurahUI(surahNumber, arabicData.verses, translationData.verses);
                 loadSurahNotes(surahNumber);
-                
+
             } catch (error) {
                 console.error('Error loading surah:', error);
                 showErrorState(error.message, true);
@@ -403,20 +403,20 @@
             document.getElementById('translation-surah-name').textContent = `Surah ${surahNumber}`;
             document.getElementById('arabic-surah-info').textContent = `${arabicVerses.length} verses`;
             document.getElementById('translation-surah-info').textContent = `${translationVerses.length} verses`;
-            
+
             // Update panes
             const arabicPane = document.getElementById('arabic-text');
             const translationPane = document.getElementById('translation-text');
-            
+
             if (arabicPane) arabicPane.innerHTML = '';
             if (translationPane) translationPane.innerHTML = '';
-            
+
             // Add Arabic verses
             if (arabicPane) {
                 arabicVerses.forEach((verse) => {
                     const verseNumber = verse.verse_number;
                     const arabicText = verse.text_uthmani || "";
-                    
+
                     const arabicVerse = document.createElement('div');
                     arabicVerse.className = 'verse';
                     arabicVerse.dataset.surah = surahNumber;
@@ -425,13 +425,13 @@
                     arabicPane.appendChild(arabicVerse);
                 });
             }
-            
+
             // Add Translation verses
             if (translationPane) {
                 translationVerses.forEach((verse) => {
                     const verseNumber = verse.verse_number;
                     const translationText = verse.translations[0].text;
-                    
+
                     const translationVerse = document.createElement('div');
                     translationVerse.className = 'verse';
                     translationVerse.dataset.surah = surahNumber;
@@ -445,7 +445,7 @@
         function setupVerseSelection() {
             const arabicPane = document.getElementById('arabic-text');
             const translationPane = document.getElementById('translation-text');
-            
+
             if (arabicPane) {
                 arabicPane.addEventListener('click', function(e) {
                     const verseElement = e.target.closest('.verse');
@@ -457,7 +457,7 @@
                     }
                 });
             }
-            
+
             if (translationPane) {
                 translationPane.addEventListener('click', function(e) {
                     const verseElement = e.target.closest('.verse');
@@ -474,7 +474,7 @@
         function setupMarkdownEditor() {
             const editor = document.getElementById('notes-editor');
             const toolbarButtons = document.querySelectorAll('.editor-toolbar button');
-            
+
             if (editor) {
                 editor.addEventListener('input', function() {
                     const surahSelector = document.getElementById('surah-selector');
@@ -484,7 +484,7 @@
                     updatePreview();
                 });
             }
-            
+
             if (toolbarButtons) {
                 toolbarButtons.forEach(button => {
                     button.addEventListener('click', function() {
@@ -493,16 +493,16 @@
                     });
                 });
             }
-            
+
             function insertMarkdownCommand(command) {
                 const editor = document.getElementById('notes-editor');
                 if (!editor) return;
-                
+
                 const start = editor.selectionStart;
                 const end = editor.selectionEnd;
                 const selectedText = editor.value.substring(start, end);
                 let newText = '';
-                
+
                 switch(command) {
                     case 'bold': newText = `**${selectedText}**`; break;
                     case 'italic': newText = `*${selectedText}*`; break;
@@ -515,13 +515,13 @@
                     case 'orderedList': newText = `1. ${selectedText}`; break;
                     default: return;
                 }
-                
+
                 editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
-                
-                const newCursorPos = command === 'link' || command === 'image' 
-                    ? start + newText.length - 1 
+
+                const newCursorPos = command === 'link' || command === 'image'
+                    ? start + newText.length - 1
                     : start + newText.length;
-                
+
                 editor.setSelectionRange(newCursorPos, newCursorPos);
                 editor.focus();
                 updatePreview();
@@ -534,29 +534,29 @@
             const arabicPane = document.getElementById('arabic-pane');
             const translationPane = document.getElementById('translation-pane');
             const notesPane = document.getElementById('notes-pane');
-            
+
             if (!resizeHandle1 || !resizeHandle2 || !arabicPane || !translationPane || !notesPane) return;
-            
+
             let isResizing1 = false;
             let isResizing2 = false;
-            
+
             resizeHandle1.addEventListener('mousedown', function(e) {
                 isResizing1 = true;
                 document.body.style.cursor = 'col-resize';
                 e.preventDefault();
             });
-            
+
             resizeHandle2.addEventListener('mousedown', function(e) {
                 isResizing2 = true;
                 document.body.style.cursor = 'col-resize';
                 e.preventDefault();
             });
-            
+
             document.addEventListener('mousemove', function(e) {
                 if (!isResizing1 && !isResizing2) return;
-                
+
                 const containerWidth = document.querySelector('.container-fluid').offsetWidth;
-                
+
                 if (isResizing1) {
                     const arabicWidth = (e.clientX / containerWidth) * 100;
                     if (arabicWidth > 20 && arabicWidth < 50) {
@@ -564,7 +564,7 @@
                         translationPane.style.flex = `0 0 ${100 - arabicWidth - 6}%`;
                     }
                 }
-                
+
                 if (isResizing2) {
                     const translationWidth = ((e.clientX - arabicPane.offsetWidth - resizeHandle1.offsetWidth) / containerWidth) * 100;
                     if (translationWidth > 20 && translationWidth < 50) {
@@ -573,7 +573,7 @@
                     }
                 }
             });
-            
+
             document.addEventListener('mouseup', function() {
                 isResizing1 = false;
                 isResizing2 = false;
@@ -583,12 +583,12 @@
 
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-button');
-            
+
             tabButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-                    
+
                     this.classList.add('active');
                     const tabId = this.dataset.tab + '-tab';
                     document.getElementById(tabId).classList.add('active');
@@ -604,26 +604,26 @@
             setupMarkdownEditor();
             setupResizeHandles();
             setupTabs();
-            
+
             // Set up event listeners
             document.getElementById('surah-selector').addEventListener('change', function() {
                 const surahNumber = this.value;
                 if (surahNumber) loadSurah(surahNumber);
             });
-            
+
             document.getElementById('translation-select').addEventListener('change', function() {
                 const surahSelector = document.getElementById('surah-selector');
                 if (surahSelector.value) {
                     loadSurah(surahSelector.value);
                 }
             });
-            
+
             // Load saved translation preference
             const savedTranslation = localStorage.getItem('preferredTranslation');
             if (savedTranslation) {
                 document.getElementById('translation-select').value = savedTranslation;
             }
-            
+
             // Save translation preference when changed
             document.getElementById('translation-select').addEventListener('change', function() {
                 localStorage.setItem('preferredTranslation', this.value);
