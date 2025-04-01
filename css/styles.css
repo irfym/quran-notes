@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap');
+
 /* General Styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,9 +16,12 @@ body {
 
 #arabic-pane {
     background-color: #f8f5ee;
+    color: #000;
     direction: rtl;
-    font-family: 'Scheherazade New', 'me_quran', 'Lateef', serif;
-    font-size: 22px;
+    font-family: 'KFGQPC Uthmanic Script', 'Amiri Quran', 'Scheherazade New', serif;
+    font-size: 28px; /* Adjust as needed */
+    direction: rtl;
+    text-align: right;
     line-height: 2.5;
 }
 
@@ -197,4 +202,13 @@ body {
 #translation-text {
   height: calc(100vh - 120px); /* Adjust the value based on your header height */
   overflow-y: auto;
+}
+
+#arabic-text {
+    color: black; /* Makes the main Arabic text black */
+}
+
+/* Override the color of diacritics */
+#arabic-text span {
+    color: inherit !important; /* Ensures diacritics match the main text */
 }
