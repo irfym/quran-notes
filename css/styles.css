@@ -2,12 +2,13 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
+    margin-top: 30px;
 }
 
 /* Panes and Layout */
 .pane {
     height: 100vh;
-    overflow-y: auto;
+    overflow: auto;
     padding: 20px;
 }
 
@@ -189,4 +190,11 @@ body {
 #current-surah-info {
     font-weight: bold;
     color: #4682b4;
+}
+
+/* Ensure scrollbars for the content areas */
+#arabic-text,
+#translation-text {
+  height: calc(100vh - 120px); /* Adjust the value based on your header height */
+  overflow-y: auto;
 }

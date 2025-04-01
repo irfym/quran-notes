@@ -118,7 +118,7 @@ marked.setOptions({
       const translationId = document.getElementById('translation-select').value;
       const [arabicResponse, translationResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/quran/verses/uthmani?chapter_number=${surahNumber}`),
-        fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}`)
+        fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}&limit=999`)
       ]);
   
       if (!arabicResponse.ok) throw new Error(`Arabic request failed: ${arabicResponse.status}`);
