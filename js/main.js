@@ -103,14 +103,53 @@ async function loadSurahList() {
   }
 }
 
-// function loadSurahNotes(surahNumber) {
-//   const editor = document.getElementById('notes-editor');
-//   if (editor) {
-//     editor.value = localStorage.getItem(`surah_notes_${surahNumber}`) || '';
-//     updatePreview();
-//   }
-//   document.getElementById('current-surah-info').textContent = `Surah ${surahNumber}`;
-// }
+// Function to highlight and scroll to the corresponding translation verse
+function highlightTranslationVerse(verseNumber) {
+  const translationPane = document.getElementById('translation-text');
+  const translationVerses = document.querySelectorAll("#translation-text .verse");
+  const arabicVerses = document.querySelectorAll("#arabic-text .verse");
+
+  arabicVerses.forEach(verse => {
+    verse.classList.remove("highlight"); // Remove previous highlights
+  });
+
+  translationVerses.forEach(verse => {
+    verse.classList.remove("highlight"); // Remove previous highlights
+    if (verse.dataset.verse === verseNumber) {
+      verse.classList.add("highlight"); // Highlight the correct verse
+
+      // Scroll only inside the translation pane, NOT the whole window
+      translationPane.scrollTo({
+        top: verse.offsetTop - translationPane.offsetTop, 
+        behavior: "smooth"
+      });
+    }
+  });
+}
+
+// Function to highlight & scroll to corresponding Arabic verse
+function highlightArabicVerse(verseNumber) {
+  const translationVerses = document.querySelectorAll("#translation-text .verse");
+  const arabicPane = document.getElementById('arabic-text');
+  const arabicVerses = document.querySelectorAll("#arabic-text .verse");
+
+  translationVerses.forEach(verse => {
+    verse.classList.remove("highlight"); // Remove previous highlights
+  });
+
+  arabicVerses.forEach(verse => {
+    verse.classList.remove("highlight"); // Remove previous highlights
+    if (verse.dataset.verse === String(verseNumber)) { // Convert to string for comparison
+      verse.classList.add("highlight"); // Highlight the correct verse
+
+      // Scroll only inside the Arabic pane, NOT the whole window
+      arabicPane.scrollTo({
+        top: verse.offsetTop - arabicPane.offsetTop, 
+        behavior: "smooth"
+      });
+    }
+  });
+}
 
 async function loadSurah(surahNumber) {
   try {
@@ -131,7 +170,6 @@ async function loadSurah(surahNumber) {
     if (!translationData.verses) throw new Error("No translation verses found");
 
     updateSurahUI(surahNumber, arabicData.verses, translationData.verses);
-    // loadSurahNotes(surahNumber);
   } catch (error) {
     console.error('Error loading surah:', error);
     showErrorState(error.message, true);
@@ -150,13 +188,8 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
     // Update headers
     document.getElementById('arabic-surah-name').textContent = `سورة ${surahName}`;
     document.getElementById('translation-surah-name').textContent = `Surah ${surahNameEnglish}, Chapter ${surahNumber}`;
-    document.getElementById('arabic-surah-info').textContent = `${arabicVerses.length} verses`;
+    document.getElementById('arabic-surah-info').textContent = ` آيات ${arabicVerses.length}`;
     document.getElementById('translation-surah-info').textContent = `${translationVerses.length} verses`;
-
-    // Update pane titles
-    // document.getElementById("arabic-pane-title").textContent = surahName;
-    // document.getElementById("translation-pane-title").textContent = surahName;
-    // document.getElementById("notes-pane-title").textContent = surahName;
 
     // Update panes
     const arabicPane = document.getElementById('arabic-text');
@@ -177,6 +210,10 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
 
         const verseNumberHTML = verseNumber ? `<span class="verse-number">${verseNumber}</span>` : "";
         arabicVerse.innerHTML = `${arabicText} ${verseNumberHTML}`;
+
+        // Add click event to highlight corresponding translation verse
+        arabicVerse.addEventListener("click", () => highlightTranslationVerse(verseNumber));
+    
         arabicPane.appendChild(arabicVerse);
       });
     }
@@ -191,6 +228,10 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
         translationVerse.dataset.surah = surahNumber;
         translationVerse.dataset.verse = verseNumber;
         translationVerse.innerHTML = `${translationText} <span class="verse-number">${verseNumber}</span>`;
+
+        // Click event to highlight corresponding Arabic verse
+        translationVerse.addEventListener("click", () => highlightArabicVerse(verseNumber));
+
         translationPane.appendChild(translationVerse);
       });
     }
