@@ -1,21 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap');
+
 /* General Styles */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
+    margin-top: 30px;
 }
 
 /* Panes and Layout */
 .pane {
     height: 100vh;
-    overflow-y: auto;
+    overflow: auto;
     padding: 20px;
 }
 
 #arabic-pane {
     background-color: #f8f5ee;
+    color: #000;
     direction: rtl;
-    font-family: 'Scheherazade New', 'me_quran', 'Lateef', serif;
-    font-size: 22px;
+    font-family: 'KFGQPC Uthmanic Script', 'Amiri Quran', 'Scheherazade New', serif;
+    font-size: 28px; /* Adjust as needed */
+    direction: rtl;
+    text-align: right;
     line-height: 2.5;
 }
 
@@ -189,4 +195,20 @@ body {
 #current-surah-info {
     font-weight: bold;
     color: #4682b4;
+}
+
+/* Ensure scrollbars for the content areas */
+#arabic-text,
+#translation-text {
+  height: calc(100vh - 120px); /* Adjust the value based on your header height */
+  overflow-y: auto;
+}
+
+#arabic-text {
+    color: black; /* Makes the main Arabic text black */
+}
+
+/* Override the color of diacritics */
+#arabic-text span {
+    color: inherit !important; /* Ensures diacritics match the main text */
 }

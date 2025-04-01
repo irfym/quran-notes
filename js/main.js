@@ -118,7 +118,7 @@ marked.setOptions({
       const translationId = document.getElementById('translation-select').value;
       const [arabicResponse, translationResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/quran/verses/uthmani?chapter_number=${surahNumber}`),
-        fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}`)
+        fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}&limit=999`)
       ]);
   
       if (!arabicResponse.ok) throw new Error(`Arabic request failed: ${arabicResponse.status}`);
@@ -154,16 +154,25 @@ marked.setOptions({
     // Add Arabic verses
     if (arabicPane) {
       arabicVerses.forEach((verse) => {
-        const verseNumber = verse.verse_number;
+  
+        // Extract the verse number from verse.key (e.g., "2:255" -> takes "255")
+        const verseNumber = verse.verse_key ? verse.verse_key.split(":")[1] : ""; 
         const arabicText = verse.text_uthmani || "";
-        const arabicVerse = document.createElement('div');
-        arabicVerse.className = 'verse';
+    
+        const arabicVerse = document.createElement("div");
+        arabicVerse.className = "verse";
         arabicVerse.dataset.surah = surahNumber;
         arabicVerse.dataset.verse = verseNumber;
-        arabicVerse.innerHTML = `${arabicText} <span class="verse-number">${verseNumber}</span>`;
+    
+        // Display the verse number if it's available
+        const verseNumberHTML = verseNumber ? `<span class="verse-number">${verseNumber}</span>` : "";
+    
+        arabicVerse.innerHTML = `${arabicText} ${verseNumberHTML}`;
         arabicPane.appendChild(arabicVerse);
       });
     }
+    
+
   
     // Add Translation verses
     if (translationPane) {
