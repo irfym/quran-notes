@@ -19,6 +19,10 @@ const TRANSLATIONS = {
   "85": "Mufti Taqi Usmani"
 };
 
+// To handle loading and saving notes
+let notesDirectoryHandle = null;
+const NOTES_FILE_PATTERN = /^Surah_(\d+)_(.+)_Notes\.md$/i;
+
 // Core Functions
 
 function updatePreview() {
@@ -413,6 +417,139 @@ function setupTabs() {
   });
 }
 
+// Functions to handle notes directory selection and saving
+async function selectNotesDirectory() {
+  try {
+    if (!('showDirectoryPicker' in window)) {
+      alert('Directory selection is only supported in Chrome/Edge. Please use individual file operations instead.');
+      return;
+    }
+
+    const handle = await window.showDirectoryPicker();
+    notesDirectoryHandle = handle;
+    document.getElementById('directory-status').textContent = `Selected: ${handle.name}`;
+    localStorage.setItem('notesDirectory', handle.name);
+    
+    // Load all notes files from the directory
+    await loadAllNotesFromDirectory();
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      console.error('Error selecting directory:', error);
+      alert('Error selecting directory');
+    }
+  }
+}
+
+async function loadAllNotesFromDirectory() {
+  if (!notesDirectoryHandle) return;
+
+  try {
+    // Get all files in the directory
+    const files = [];
+    for await (const entry of notesDirectoryHandle.values()) {
+      if (entry.kind === 'file' && entry.name.match(NOTES_FILE_PATTERN)) {
+        files.push(entry);
+      }
+    }
+
+    // Load each file's content
+    for (const fileHandle of files) {
+      const file = await fileHandle.getFile();
+      const content = await file.text();
+      const match = file.name.match(NOTES_FILE_PATTERN);
+      
+      if (match) {
+        const surahNumber = match[1];
+        // Store the content in localStorage under the surah key
+        localStorage.setItem(`surah_notes_${surahNumber}`, content);
+      }
+    }
+
+    // If a surah is currently selected, update its notes
+    const currentSurah = document.getElementById('surah-selector').value;
+    if (currentSurah) {
+      const editor = document.getElementById('notes-editor');
+      if (editor) {
+        editor.value = localStorage.getItem(`surah_notes_${currentSurah}`) || '';
+        updatePreview();
+      }
+    }
+
+    alert(`Successfully loaded ${files.length} notes files`);
+  } catch (error) {
+    console.error('Error loading notes from directory:', error);
+    alert('Error loading notes from directory');
+  }
+}
+
+async function saveAllNotesToDirectory() {
+  if (!notesDirectoryHandle) {
+    alert('Please select a directory first');
+    return;
+  }
+
+  try {
+    let savedCount = 0;
+    
+    // Get all surahs that have notes
+    const surahsWithNotes = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('surah_notes_')) {
+        const surahNumber = key.replace('surah_notes_', '');
+        surahsWithNotes.push(surahNumber);
+      }
+    }
+
+    // Save each surah's notes to a file
+    for (const surahNumber of surahsWithNotes) {
+      const notes = localStorage.getItem(`surah_notes_${surahNumber}`);
+      if (!notes) continue;
+
+      // // Get surah name (use existing if loaded, otherwise placeholder)
+      // let surahName = 'Notes';
+      // const surahNameElement = document.getElementById('translation-surah-name');
+      // // if (surahNameElement && surahNameElement.textContent.includes(surahNumber)) {
+      // //   surahName = surahNameElement.textContent.replace('سورة ', '').trim();
+      // // }
+      // if (surahNameElement && surahNameElement.textContent.includes(surahNumber)) {
+      //   surahName = surahNameElement.textContent.replace('Surah', '').trim();
+      //   surahName = surahNameElement.textContent.replace(/, Chapter \d+/, '').trim();
+      // }
+      // else {
+      //   surahName = surahNameElement
+      // }
+
+      const fileName = `${surahNumber}_notes.md`;
+      
+      try {
+        // Check if file exists
+        let fileHandle;
+        try {
+          fileHandle = await notesDirectoryHandle.getFileHandle(fileName, { create: false });
+        } catch {
+          // File doesn't exist, create it
+          fileHandle = await notesDirectoryHandle.getFileHandle(fileName, { create: true });
+        }
+
+        // Create a writer
+        const writable = await fileHandle.createWritable();
+        await writable.write(notes);
+        await writable.close();
+        savedCount++;
+      } catch (error) {
+        console.error(`Error saving file ${fileName}:`, error);
+      }
+    }
+
+    alert(`Successfully saved ${savedCount} notes files`);
+  } catch (error) {
+    console.error('Error saving all notes:', error);
+    alert('Error saving all notes');
+  }
+}
+
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
   loadSurahList();
@@ -432,6 +569,16 @@ document.addEventListener('DOMContentLoaded', function() {
       loadSurah(surahSelector.value);
     }
   });
+
+  // Event listeners for directory selection and saving notes
+  document.getElementById('select-directory').addEventListener('click', selectNotesDirectory);
+  document.getElementById('save-all-notes').addEventListener('click', saveAllNotesToDirectory);
+
+  // Try to restore the last used directory name
+  const lastDirectory = localStorage.getItem('notesDirectory');
+  if (lastDirectory) {
+    document.getElementById('directory-status').textContent = `Last used: ${lastDirectory}`;
+  }
 
   // Load saved translation preference
   const savedTranslation = localStorage.getItem('preferredTranslation');

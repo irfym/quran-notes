@@ -245,6 +245,37 @@ body {
     color: #4682b4;
 }
 
+/* Add these new styles */
+#select-directory, #save-all-notes {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+  
+#directory-status {
+    font-size: 13px;
+    vertical-align: middle;
+}
+  
+.btn-outline-primary {
+    color: #0d6efd;
+    border-color: #0d6efd;
+}
+  
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+  
+.btn-outline-success {
+    color: #198754;
+    border-color: #198754;
+}
+  
+.btn-outline-success:hover {
+    background-color: #198754;
+    color: white;
+}
+
 /* Ensure scrollbars for the content areas */
 #arabic-text,
 #translation-text {
