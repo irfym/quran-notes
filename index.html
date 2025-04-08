@@ -72,6 +72,17 @@
       <!-- Notes Pane -->
       <div class="col-md p-0" id="notes-pane">
         <div class="p-3">
+          <div class="d-flex justify-content-between mb-3">
+            <div>
+              <button class="btn btn-sm btn-outline-primary" id="select-directory">
+                <i class="fas fa-folder-open"></i> Select Notes Directory
+              </button>
+              <span id="directory-status" class="ms-2 small text-muted">No directory selected</span>
+            </div>
+            <button class="btn btn-sm btn-outline-success" id="save-all-notes">
+              <i class="fas fa-save"></i> Save All Notes
+            </button>
+          </div>
           <h4>Notes for <span id="current-surah-info">Select a surah</span></h4>
           <div class="d-flex mb-3">
             <button class="tab-button active" data-tab="editor">Editor</button>
