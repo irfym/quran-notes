@@ -560,7 +560,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById('surah-selector').addEventListener('change', function() {
     const surahNumber = this.value;
-    if (surahNumber) loadSurah(surahNumber);
+    if (surahNumber) {
+      loadSurah(surahNumber);
+      localStorage.setItem('lastOpenedSurah', surahNumber); // Save the last opened surah
+    }
   });
 
   document.getElementById('translation-select').addEventListener('change', function() {
@@ -590,4 +593,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('translation-select').addEventListener('change', function() {
     localStorage.setItem('preferredTranslation', this.value);
   });
+
+  // Restore the last opened surah
+  const lastOpenedSurah = localStorage.getItem('lastOpenedSurah');
+  if (lastOpenedSurah) {
+    const surahSelector = document.getElementById('surah-selector');
+    surahSelector.value = lastOpenedSurah;
+    loadSurah(lastOpenedSurah);
+  }
 });
