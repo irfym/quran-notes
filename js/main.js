@@ -13,34 +13,59 @@ marked.setOptions({
 const API_BASE_URL = 'https://api.quran.com/api/v4';
 const TRANSLATIONS = {
   // Original translations
-  "131": "MAS Abdel Haleem",
-  "149": "Saheeh International",
-  "19": "Tafheem-ul-Quran (Urdu)",
-  "22": "Abdul Majid Daryabadi",
-  "85": "Mufti Taqi Usmani",
-  
-  // Additional translations
-  "20": "Yusuf Ali",
-  "17": "Dr. Ghali",
-  "84": "Muhsin Khan",
-  "82": "Muhammad Asad",
-  "75": "A.J. Arberry",
-  "93": "T.B. Irving",
-  "167": "Maarif-ul-Quran",
-  "134": "The Study Quran",
-  "203": "Ali Ünal",
-  "207": "Mustafa Khattab",
-  "95": "Muhammad Sarwar",
-  "57": "Syed Vickar Ahamed",
-  "171": "Dr. Mustafa Khattab",
-  "127": "Tafsir al-Jalalayn (Eng)",
-  "54": "Maududi",
-  "199": "The Noble Quran",
-  "39": "English Translation",
-  "40": "Farsi Translation",
-  "50": "Indonesian Translation"
+  "85": "M.A.S. Abdel Haleem (Abdul Haleem)",
+  "131": "Dr. Mustafa Khattab, The Clear Quran (Dr. Mustafa Khattab)",
+  "84": "T. Usmani (Mufti Taqi Usmani)",
+  "95": "A. Maududi (Tafhim commentary) (Sayyid Abul Ala Maududi)",
+  "19": "M. Pickthall (Mohammed Marmaduke William Pickthall)",
+  "22": "A. Yusuf Ali (Abdullah Yusuf Ali)",
+  "20": "Saheeh International (Saheeh International)",
+  "203": "Al-Hilali & Khan (Muhammad Taqi-ud-Din al-Hilali & Muhammad Muhsin Khan)",
+  "57": "Transliteration (Transliteration)"
+  // "131": "MAS Abdel Haleem",
+  // "149": "Saheeh International",
+  // "20": "Yusuf Ali",
+  // "17": "Dr. Ghali",
+  // "84": "Muhsin Khan",
+  // "82": "Muhammad Asad",
+  // "75": "A.J. Arberry",
+  // "93": "T.B. Irving",
+  // "134": "The Study Quran",
+  // "203": "Ali Ünal",
+  // "207": "Mustafa Khattab",
+  // "95": "Muhammad Sarwar",
+  // "57": "Syed Vickar Ahamed",
+  // "171": "Dr. Mustafa Khattab",
+  // "127": "Tafsir al-Jalalayn (Eng)",
+  // "54": "Maududi",
+  // "199": "The Noble Quran",
+  // "22": "Abdul Majid Daryabadi",
+  // "85": "Mufti Taqi Usmani"
 };
 
+async function getAllTranslations() {
+  try {
+    const response = await fetch('https://api.quran.com/api/v4/resources/translations');
+    const data = await response.json();
+    
+    // Filter English translations
+    const englishTranslations = data.translations.filter(t => t.language_name === 'English');
+    console.log("English Translations:", englishTranslations);
+    
+    // Or see all translations grouped by language
+    const byLanguage = {};
+    data.translations.forEach(t => {
+      if (!byLanguage[t.language_name]) byLanguage[t.language_name] = [];
+      byLanguage[t.language_name].push(`${t.id}: ${t.name} (${t.author_name})`);
+    });
+    console.log("All Translations by Language:", byLanguage);
+    
+    return data.translations;
+  } catch (error) {
+    console.error('Error fetching translations:', error);
+    return [];
+  }
+}
 
 // To handle loading and saving notes
 let notesDirectoryHandle = null;
@@ -418,62 +443,65 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses, selec
 
     // Add Translation verses
     if (translationPane) {
-      // Group translations by verse number
+      // Create a map of verse number to translations in the correct order
       const verseGroups = {};
       
       translationVerses.forEach((verse) => {
-        const verseNumber = verse.verse_number;
-        
-        if (!verseGroups[verseNumber]) {
-          verseGroups[verseNumber] = {
-            surah: surahNumber,
-            verse: verseNumber,
-            translations: []
-          };
-        }
-        
-        // Add each translation to the verse group
-        verse.translations.forEach((translation, index) => {
-          verseGroups[verseNumber].translations.push({
-            id: selectedTranslations[index],
-            text: translation.text
+          const verseNumber = verse.verse_number;
+          
+          if (!verseGroups[verseNumber]) {
+              verseGroups[verseNumber] = {
+                  surah: surahNumber,
+                  verse: verseNumber,
+                  translations: []
+              };
+          }
+          
+          // Create an array with null values to maintain order
+          if (verseGroups[verseNumber].translations.length === 0) {
+              verseGroups[verseNumber].translations = selectedTranslations.map(id => null);
+          }
+          
+          // Place each translation in its correct position
+          verse.translations.forEach((translation, index) => {
+              const translationIndex = selectedTranslations.indexOf(translation.resource_id.toString());
+              if (translationIndex !== -1) {
+                  verseGroups[verseNumber].translations[translationIndex] = {
+                      id: translation.resource_id.toString(),
+                      text: translation.text
+                  };
+              }
           });
-        });
       });
       
-      // Create verse elements with all translations
+      // Create verse elements with all translations in correct order
       Object.values(verseGroups).forEach(group => {
-        const verseContainer = document.createElement('div');
-        verseContainer.className = 'verse';
-        verseContainer.dataset.surah = group.surah;
-        verseContainer.dataset.verse = group.verse;
-        
-        let verseContent = '';
-        
-        // If there's only one translation, display it directly
-        if (group.translations.length === 1) {
-          verseContent = `${group.translations[0].text} <span class="verse-number">${group.verse}</span>`;
-        } else {
-          // For multiple translations, create a structured view
-          verseContent += `<span class="verse-number">${group.verse}</span><br>`;
+          const verseContainer = document.createElement('div');
+          verseContainer.className = 'verse';
+          verseContainer.dataset.surah = group.surah;
+          verseContainer.dataset.verse = group.verse;
           
-          group.translations.forEach(translation => {
-            const translatorName = TRANSLATIONS[translation.id];
-            verseContent += `
-              <div class="translation-wrapper">
-                <div class="translation-header">${translatorName}</div>
-                <div class="translation-text">${translation.text}</div>
-              </div>
-            `;
+          let verseContent = `<span class="verse-number">${group.verse}</span><br>`;
+          
+          // Add translations in the correct selected order
+          group.translations.forEach((translation, index) => {
+              if (translation) {
+                  const translatorName = TRANSLATIONS[translation.id] || `Translation ${index + 1}`;
+                  verseContent += `
+                      <div class="translation-wrapper">
+                          <div class="translation-header">${translatorName}</div>
+                          <div class="translation-text">${translation.text}</div>
+                      </div>
+                  `;
+              }
           });
-        }
-        
-        verseContainer.innerHTML = verseContent;
-        
-        // Click event to highlight corresponding Arabic verse
-        verseContainer.addEventListener("click", () => highlightArabicVerse(group.verse));
-        
-        translationPane.appendChild(verseContainer);
+          
+          verseContainer.innerHTML = verseContent;
+          
+          // Click event to highlight corresponding Arabic verse
+          verseContainer.addEventListener("click", () => highlightArabicVerse(group.verse));
+          
+          translationPane.appendChild(verseContainer);
       });
     }
 
