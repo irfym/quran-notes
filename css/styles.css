@@ -40,7 +40,7 @@ body {
 
 .container-fluid {
     margin-top: 120px; /* Push content down to prevent overlap */
-  }
+}
 
 #notes-pane {
     background-color: #fff;
@@ -83,6 +83,20 @@ body {
     font-weight: bold;
     margin-left: 5px;
     margin-right: 5px;
+}
+
+/* Multi-translation styling */
+.translation-wrapper {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted #ccc;
+}
+
+.translation-header {
+    font-weight: bold;
+    color: #4682b4;
+    margin-bottom: 5px;
+    font-size: 14px;
 }
 
 /* Editor Toolbar */
@@ -152,7 +166,7 @@ body {
     z-index: 1000; /* Ensure it stays above everything */
 }
   
-  #surah-selector {
+#surah-selector {
     width: 250px; /* Adjust dropdown width */
     text-align: center; /* Center the dropdown */
     padding: 5px;
@@ -224,6 +238,10 @@ body {
 .translation-selector {
     max-width: 300px;
     margin: 0 auto 15px auto;
+}
+
+#translation-select {
+    width: 100%;
 }
 
 .retry-btn {

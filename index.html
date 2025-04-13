@@ -47,13 +47,13 @@
       <div class="col-md p-0" id="translation-pane">
         <div class="surah-header">
           <div class="translation-selector">
-            <select id="translation-select" class="form-select">
-              <option value="131">MAS Abdel Haleem (Default)</option>
-              <option value="149">Saheeh International</option>
-              <option value="19">Tafheem-ul-Quran (Urdu)</option>
-              <option value="22">Abdul Majid Daryabadi</option>
-              <option value="85">Mufti Taqi Usmani</option>
+            <label for="translation-select">Select Translations:</label>
+            <select id="translation-select" class="form-select" multiple size="5">
+              <!-- Options will be populated dynamically from the TRANSLATIONS object -->
             </select>
+            <div class="mt-1 text-muted small">
+              Hold Ctrl/Cmd to select multiple translations.
+            </div>
           </div>
           <div class="surah-name" id="translation-surah-name"></div>
           <div class="surah-info" id="translation-surah-info"></div>
