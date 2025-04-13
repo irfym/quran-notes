@@ -12,12 +12,60 @@ marked.setOptions({
 // API Configuration
 const API_BASE_URL = 'https://api.quran.com/api/v4';
 const TRANSLATIONS = {
-  "131": "MAS Abdel Haleem",
-  "149": "Saheeh International",
-  "19": "Tafheem-ul-Quran (Urdu)",
-  "22": "Abdul Majid Daryabadi",
-  "85": "Mufti Taqi Usmani"
+  // Original translations
+  "85": "M.A.S. Abdel Haleem (Abdul Haleem)",
+  "131": "Dr. Mustafa Khattab, The Clear Quran (Dr. Mustafa Khattab)",
+  "84": "T. Usmani (Mufti Taqi Usmani)",
+  "95": "A. Maududi (Tafhim commentary) (Sayyid Abul Ala Maududi)",
+  "19": "M. Pickthall (Mohammed Marmaduke William Pickthall)",
+  "22": "A. Yusuf Ali (Abdullah Yusuf Ali)",
+  "20": "Saheeh International (Saheeh International)",
+  "203": "Al-Hilali & Khan (Muhammad Taqi-ud-Din al-Hilali & Muhammad Muhsin Khan)",
+  "57": "Transliteration (Transliteration)"
+  // "131": "MAS Abdel Haleem",
+  // "149": "Saheeh International",
+  // "20": "Yusuf Ali",
+  // "17": "Dr. Ghali",
+  // "84": "Muhsin Khan",
+  // "82": "Muhammad Asad",
+  // "75": "A.J. Arberry",
+  // "93": "T.B. Irving",
+  // "134": "The Study Quran",
+  // "203": "Ali Ünal",
+  // "207": "Mustafa Khattab",
+  // "95": "Muhammad Sarwar",
+  // "57": "Syed Vickar Ahamed",
+  // "171": "Dr. Mustafa Khattab",
+  // "127": "Tafsir al-Jalalayn (Eng)",
+  // "54": "Maududi",
+  // "199": "The Noble Quran",
+  // "22": "Abdul Majid Daryabadi",
+  // "85": "Mufti Taqi Usmani"
 };
+
+async function getAllTranslations() {
+  try {
+    const response = await fetch('https://api.quran.com/api/v4/resources/translations');
+    const data = await response.json();
+    
+    // Filter English translations
+    const englishTranslations = data.translations.filter(t => t.language_name === 'English');
+    console.log("English Translations:", englishTranslations);
+    
+    // Or see all translations grouped by language
+    const byLanguage = {};
+    data.translations.forEach(t => {
+      if (!byLanguage[t.language_name]) byLanguage[t.language_name] = [];
+      byLanguage[t.language_name].push(`${t.id}: ${t.name} (${t.author_name})`);
+    });
+    console.log("All Translations by Language:", byLanguage);
+    
+    return data.translations;
+  } catch (error) {
+    console.error('Error fetching translations:', error);
+    return [];
+  }
+}
 
 // To handle loading and saving notes
 let notesDirectoryHandle = null;
@@ -56,6 +104,43 @@ function showLoadingState() {
         <p>Loading...</p>
       </div>
     `;
+  }
+}
+
+// Function to populate translation dropdown with all available translations
+function populateTranslationDropdown() {
+  const translationSelect = document.getElementById('translation-select');
+  if (!translationSelect) return;
+  
+  // Clear existing options
+  translationSelect.innerHTML = '';
+  
+  // Add all translations from our config object
+  Object.entries(TRANSLATIONS).forEach(([id, name]) => {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = name;
+    translationSelect.appendChild(option);
+  });
+  
+  // Load saved preferences
+  const savedTranslations = localStorage.getItem('preferredTranslations');
+  if (savedTranslations) {
+    try {
+      const translationIds = JSON.parse(savedTranslations);
+      
+      // Select the saved translations
+      Array.from(translationSelect.options).forEach(option => {
+        option.selected = translationIds.includes(option.value);
+      });
+    } catch (e) {
+      console.error('Error parsing saved translations', e);
+      // Set default if there's an error
+      translationSelect.value = '131'; // Default to MAS Abdel Haleem
+    }
+  } else {
+    // Set a default translation if nothing is saved
+    translationSelect.value = '131'; // Default to MAS Abdel Haleem
   }
 }
 
@@ -112,19 +197,38 @@ function highlightTranslationVerse(verseNumber) {
   const translationPane = document.getElementById('translation-text');
   const translationVerses = document.querySelectorAll("#translation-text .verse");
   const arabicVerses = document.querySelectorAll("#arabic-text .verse");
+  const arabicPane = document.getElementById('arabic-text');
 
+  // Remove previous highlights from both panes
   arabicVerses.forEach(verse => {
-    verse.classList.remove("highlight"); // Remove previous highlights
+    verse.classList.remove("highlight");
   });
 
   translationVerses.forEach(verse => {
-    verse.classList.remove("highlight"); // Remove previous highlights
-    if (verse.dataset.verse === verseNumber) {
-      verse.classList.add("highlight"); // Highlight the correct verse
+    verse.classList.remove("highlight");
+  });
 
-      // Scroll only inside the translation pane, NOT the whole window
+  // Highlight and scroll in translation pane
+  translationVerses.forEach(verse => {
+    if (verse.dataset.verse === verseNumber) {
+      verse.classList.add("highlight");
+      
+      // Scroll in translation pane
       translationPane.scrollTo({
         top: verse.offsetTop - translationPane.offsetTop, 
+        behavior: "smooth"
+      });
+    }
+  });
+
+  // Also highlight and scroll in Arabic pane
+  arabicVerses.forEach(verse => {
+    if (verse.dataset.verse === String(verseNumber)) {
+      verse.classList.add("highlight");
+      
+      // Scroll in Arabic pane
+      arabicPane.scrollTo({
+        top: verse.offsetTop - arabicPane.offsetTop, 
         behavior: "smooth"
       });
     }
@@ -136,32 +240,119 @@ function highlightArabicVerse(verseNumber) {
   const translationVerses = document.querySelectorAll("#translation-text .verse");
   const arabicPane = document.getElementById('arabic-text');
   const arabicVerses = document.querySelectorAll("#arabic-text .verse");
+  const translationPane = document.getElementById('translation-text');
 
+  // Remove previous highlights from both panes
   translationVerses.forEach(verse => {
-    verse.classList.remove("highlight"); // Remove previous highlights
+    verse.classList.remove("highlight");
   });
 
   arabicVerses.forEach(verse => {
-    verse.classList.remove("highlight"); // Remove previous highlights
-    if (verse.dataset.verse === String(verseNumber)) { // Convert to string for comparison
-      verse.classList.add("highlight"); // Highlight the correct verse
+    verse.classList.remove("highlight");
+  });
 
-      // Scroll only inside the Arabic pane, NOT the whole window
+  // Highlight and scroll to Arabic verse
+  arabicVerses.forEach(verse => {
+    if (verse.dataset.verse === String(verseNumber)) {
+      verse.classList.add("highlight");
+      
+      // Scroll only inside the Arabic pane
       arabicPane.scrollTo({
         top: verse.offsetTop - arabicPane.offsetTop, 
         behavior: "smooth"
       });
     }
   });
+
+  // Also highlight and scroll to matching translation verse
+  translationVerses.forEach(verse => {
+    if (verse.dataset.verse === String(verseNumber)) {
+      verse.classList.add("highlight");
+      
+      // Scroll to the verse in translation pane as well
+      translationPane.scrollTo({
+        top: verse.offsetTop - translationPane.offsetTop, 
+        behavior: "smooth"
+      });
+    }
+  });
 }
 
-async function loadSurah(surahNumber) {
+async function loadSurah(surahNumber, preservePosition = false) {
   try {
+    // Remember the current highlighted verse if preservePosition is true
+    let currentHighlightedVerseNumber = null;
+    
+    if (preservePosition) {
+      // Check for highlighted verses in both panes
+      const highlightedArabicVerse = document.querySelector("#arabic-text .verse.highlight");
+      const highlightedTranslationVerse = document.querySelector("#translation-text .verse.highlight");
+      
+      // Get the verse number from whichever one is highlighted
+      if (highlightedArabicVerse) {
+        currentHighlightedVerseNumber = highlightedArabicVerse.dataset.verse;
+      } else if (highlightedTranslationVerse) {
+        currentHighlightedVerseNumber = highlightedTranslationVerse.dataset.verse;
+      } else {
+        // If no verse is highlighted, try to get a visible verse instead
+        // First check translation pane for visible verses
+        const translationPane = document.getElementById('translation-text');
+        const translationVerses = document.querySelectorAll("#translation-text .verse");
+        
+        if (translationPane && translationVerses.length > 0) {
+          // Find a verse that's currently visible in the viewport
+          const paneRect = translationPane.getBoundingClientRect();
+          
+          for (const verse of translationVerses) {
+            const verseRect = verse.getBoundingClientRect();
+            // Check if the verse is visible within the pane
+            if (verseRect.top >= paneRect.top && 
+                verseRect.bottom <= paneRect.bottom) {
+              currentHighlightedVerseNumber = verse.dataset.verse;
+              break;
+            }
+          }
+        }
+        
+        // If still no verse found, check Arabic pane
+        if (!currentHighlightedVerseNumber) {
+          const arabicPane = document.getElementById('arabic-text');
+          const arabicVerses = document.querySelectorAll("#arabic-text .verse");
+          
+          if (arabicPane && arabicVerses.length > 0) {
+            const paneRect = arabicPane.getBoundingClientRect();
+            
+            for (const verse of arabicVerses) {
+              const verseRect = verse.getBoundingClientRect();
+              if (verseRect.top >= paneRect.top && 
+                  verseRect.bottom <= paneRect.bottom) {
+                currentHighlightedVerseNumber = verse.dataset.verse;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     showLoadingState();
-    const translationId = document.getElementById('translation-select').value;
+    
+    // Get selected translations as an array
+    const translationSelect = document.getElementById('translation-select');
+    const selectedTranslations = Array.from(translationSelect.selectedOptions).map(option => option.value);
+    
+    // Default to a standard translation if nothing is selected
+    if (selectedTranslations.length === 0) {
+      selectedTranslations.push('131'); // MAS Abdel Haleem as default
+      translationSelect.value = '131';
+    }
+    
+    // Join translations with comma for API call
+    const translationIds = selectedTranslations.join(',');
+    
     const [arabicResponse, translationResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/quran/verses/uthmani?chapter_number=${surahNumber}`),
-      fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationId}&limit=999`)
+      fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationIds}&limit=999`)
     ]);
 
     if (!arabicResponse.ok) throw new Error(`Arabic request failed: ${arabicResponse.status}`);
@@ -173,15 +364,22 @@ async function loadSurah(surahNumber) {
     if (!arabicData.verses) throw new Error("No Arabic verses found");
     if (!translationData.verses) throw new Error("No translation verses found");
 
-    updateSurahUI(surahNumber, arabicData.verses, translationData.verses);
+    await updateSurahUI(surahNumber, arabicData.verses, translationData.verses, selectedTranslations);
+    
+    // After UI is updated, scroll to the previously highlighted verse if we have one
+    if (preservePosition && currentHighlightedVerseNumber) {
+      setTimeout(() => {
+        // Using highlightArabicVerse will now highlight and scroll both panes
+        highlightArabicVerse(currentHighlightedVerseNumber);
+      }, 300); // Increased timeout to ensure DOM has fully updated
+    }
   } catch (error) {
     console.error('Error loading surah:', error);
     showErrorState(error.message, true);
   }
 }
 
-
-async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
+async function updateSurahUI(surahNumber, arabicVerses, translationVerses, selectedTranslations) {
   try {
     // Fetch Surah name
     const response = await fetch(`https://api.quran.com/api/v4/chapters/${surahNumber}`);
@@ -245,19 +443,65 @@ async function updateSurahUI(surahNumber, arabicVerses, translationVerses) {
 
     // Add Translation verses
     if (translationPane) {
+      // Create a map of verse number to translations in the correct order
+      const verseGroups = {};
+      
       translationVerses.forEach((verse) => {
-        const verseNumber = verse.verse_number;
-        const translationText = verse.translations[0].text;
-        const translationVerse = document.createElement('div');
-        translationVerse.className = 'verse';
-        translationVerse.dataset.surah = surahNumber;
-        translationVerse.dataset.verse = verseNumber;
-        translationVerse.innerHTML = `${translationText} <span class="verse-number">${verseNumber}</span>`;
-
-        // Click event to highlight corresponding Arabic verse
-        translationVerse.addEventListener("click", () => highlightArabicVerse(verseNumber));
-
-        translationPane.appendChild(translationVerse);
+          const verseNumber = verse.verse_number;
+          
+          if (!verseGroups[verseNumber]) {
+              verseGroups[verseNumber] = {
+                  surah: surahNumber,
+                  verse: verseNumber,
+                  translations: []
+              };
+          }
+          
+          // Create an array with null values to maintain order
+          if (verseGroups[verseNumber].translations.length === 0) {
+              verseGroups[verseNumber].translations = selectedTranslations.map(id => null);
+          }
+          
+          // Place each translation in its correct position
+          verse.translations.forEach((translation, index) => {
+              const translationIndex = selectedTranslations.indexOf(translation.resource_id.toString());
+              if (translationIndex !== -1) {
+                  verseGroups[verseNumber].translations[translationIndex] = {
+                      id: translation.resource_id.toString(),
+                      text: translation.text
+                  };
+              }
+          });
+      });
+      
+      // Create verse elements with all translations in correct order
+      Object.values(verseGroups).forEach(group => {
+          const verseContainer = document.createElement('div');
+          verseContainer.className = 'verse';
+          verseContainer.dataset.surah = group.surah;
+          verseContainer.dataset.verse = group.verse;
+          
+          let verseContent = `<span class="verse-number">${group.verse}</span><br>`;
+          
+          // Add translations in the correct selected order
+          group.translations.forEach((translation, index) => {
+              if (translation) {
+                  const translatorName = TRANSLATIONS[translation.id] || `Translation ${index + 1}`;
+                  verseContent += `
+                      <div class="translation-wrapper">
+                          <div class="translation-header">${translatorName}</div>
+                          <div class="translation-text">${translation.text}</div>
+                      </div>
+                  `;
+              }
+          });
+          
+          verseContainer.innerHTML = verseContent;
+          
+          // Click event to highlight corresponding Arabic verse
+          verseContainer.addEventListener("click", () => highlightArabicVerse(group.verse));
+          
+          translationPane.appendChild(verseContainer);
       });
     }
 
@@ -506,20 +750,6 @@ async function saveAllNotesToDirectory() {
       const notes = localStorage.getItem(`surah_notes_${surahNumber}`);
       if (!notes) continue;
 
-      // // Get surah name (use existing if loaded, otherwise placeholder)
-      // let surahName = 'Notes';
-      // const surahNameElement = document.getElementById('translation-surah-name');
-      // // if (surahNameElement && surahNameElement.textContent.includes(surahNumber)) {
-      // //   surahName = surahNameElement.textContent.replace('سورة ', '').trim();
-      // // }
-      // if (surahNameElement && surahNameElement.textContent.includes(surahNumber)) {
-      //   surahName = surahNameElement.textContent.replace('Surah', '').trim();
-      //   surahName = surahNameElement.textContent.replace(/, Chapter \d+/, '').trim();
-      // }
-      // else {
-      //   surahName = surahNameElement
-      // }
-
       const fileName = `${surahNumber}_notes.md`;
       
       try {
@@ -549,6 +779,15 @@ async function saveAllNotesToDirectory() {
   }
 }
 
+// Function to save selected translations to localStorage
+function saveSelectedTranslations() {
+  const translationSelect = document.getElementById('translation-select');
+  const selectedOptions = Array.from(translationSelect.selectedOptions).map(option => option.value);
+  
+  if (selectedOptions.length > 0) {
+    localStorage.setItem('preferredTranslations', JSON.stringify(selectedOptions));
+  }
+}
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
@@ -557,19 +796,22 @@ document.addEventListener('DOMContentLoaded', function() {
   setupMarkdownEditor();
   setupResizeHandles();
   setupTabs();
+  populateTranslationDropdown(); // Add this line to populate translations
 
   document.getElementById('surah-selector').addEventListener('change', function() {
     const surahNumber = this.value;
     if (surahNumber) {
       loadSurah(surahNumber);
-      localStorage.setItem('lastOpenedSurah', surahNumber); // Save the last opened surah
+      localStorage.setItem('lastOpenedSurah', surahNumber);
     }
   });
 
+  // Updated translation select event listener to handle multiple selections AND preserve position
   document.getElementById('translation-select').addEventListener('change', function() {
+    saveSelectedTranslations();
     const surahSelector = document.getElementById('surah-selector');
     if (surahSelector.value) {
-      loadSurah(surahSelector.value);
+      loadSurah(surahSelector.value, true); // Pass true to preserve position
     }
   });
 
@@ -583,16 +825,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('directory-status').textContent = `Last used: ${lastDirectory}`;
   }
 
-  // Load saved translation preference
-  const savedTranslation = localStorage.getItem('preferredTranslation');
-  if (savedTranslation) {
-    document.getElementById('translation-select').value = savedTranslation;
+  // Load saved translation preferences
+  const savedTranslations = localStorage.getItem('preferredTranslations');
+  if (savedTranslations) {
+    try {
+      const translationIds = JSON.parse(savedTranslations);
+      const translationSelect = document.getElementById('translation-select');
+      
+      // Clear any default selections
+      Array.from(translationSelect.options).forEach(option => {
+        option.selected = translationIds.includes(option.value);
+      });
+    } catch (e) {
+      console.error('Error parsing saved translations', e);
+    }
+  } else {
+    // Set a default translation if nothing is saved
+    document.getElementById('translation-select').value = '131'; // Default to MAS Abdel Haleem
   }
-
-  // Save translation preference when changed
-  document.getElementById('translation-select').addEventListener('change', function() {
-    localStorage.setItem('preferredTranslation', this.value);
-  });
 
   // Restore the last opened surah
   const lastOpenedSurah = localStorage.getItem('lastOpenedSurah');
