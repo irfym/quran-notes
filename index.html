@@ -46,13 +46,17 @@
       <!-- Translation Pane -->
       <div class="col-md p-0" id="translation-pane">
         <div class="surah-header">
-          <div class="translation-selector">
-            <label for="translation-select">Select Translations:</label>
-            <select id="translation-select" class="form-select" multiple size="5">
-              <!-- Options will be populated dynamically from the TRANSLATIONS object -->
-            </select>
-            <div class="mt-1 text-muted small">
-              Hold Ctrl/Cmd to select multiple translations.
+          <div class="translation-selector-container">
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="translationMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-language"></i> Translations
+              </button>
+              <div class="dropdown-menu translation-dropdown-menu" aria-labelledby="translationMenuButton">
+                <div class="translation-selector px-3 py-2">
+                  <label>Select Translations:</label>
+                  <!-- Checkboxes will be dynamically added here -->
+                </div>
+              </div>
             </div>
           </div>
           <div class="surah-name" id="translation-surah-name"></div>
