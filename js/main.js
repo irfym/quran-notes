@@ -109,38 +109,117 @@ function showLoadingState() {
 
 // Function to populate translation dropdown with all available translations
 function populateTranslationDropdown() {
-  const translationSelect = document.getElementById('translation-select');
-  if (!translationSelect) return;
+  const translationContainer = document.querySelector('.translation-selector');
+  if (!translationContainer) return;
   
-  // Clear existing options
-  translationSelect.innerHTML = '';
+  // Create checkbox container
+  const checkboxContainer = document.createElement('div');
+  checkboxContainer.className = 'translation-checkbox-container';
   
-  // Add all translations from our config object
-  Object.entries(TRANSLATIONS).forEach(([id, name]) => {
-    const option = document.createElement('option');
-    option.value = id;
-    option.textContent = name;
-    translationSelect.appendChild(option);
-  });
+  // Clear existing content
+  translationContainer.innerHTML = '';
   
   // Load saved preferences
   const savedTranslations = localStorage.getItem('preferredTranslations');
+  let selectedTranslations = [];
+  
   if (savedTranslations) {
     try {
-      const translationIds = JSON.parse(savedTranslations);
-      
-      // Select the saved translations
-      Array.from(translationSelect.options).forEach(option => {
-        option.selected = translationIds.includes(option.value);
-      });
+      selectedTranslations = JSON.parse(savedTranslations);
     } catch (e) {
       console.error('Error parsing saved translations', e);
-      // Set default if there's an error
-      translationSelect.value = '131'; // Default to MAS Abdel Haleem
+      selectedTranslations = ['131']; // Default
     }
   } else {
-    // Set a default translation if nothing is saved
-    translationSelect.value = '131'; // Default to MAS Abdel Haleem
+    selectedTranslations = ['131']; // Default to Dr. Mustafa Khattab
+  }
+  
+  // Add checkboxes for each translation
+  Object.entries(TRANSLATIONS).forEach(([id, name]) => {
+    const item = document.createElement('div');
+    item.className = 'translation-checkbox-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `translation-${id}`;
+    checkbox.value = id;
+    checkbox.checked = selectedTranslations.includes(id);
+    checkbox.addEventListener('change', handleTranslationCheckboxChange);
+    
+    const label = document.createElement('label');
+    label.htmlFor = `translation-${id}`;
+    label.textContent = name;
+    
+    item.appendChild(checkbox);
+    item.appendChild(label);
+    checkboxContainer.appendChild(item);
+  });
+  
+  translationContainer.appendChild(checkboxContainer);
+  
+  // Update translation count badge
+  updateTranslationCountBadge();
+}
+
+// Add this new function to update the badge count and preview
+function updateTranslationCountBadge() {
+  const checkboxes = document.querySelectorAll('.translation-checkbox-item input:checked');
+  const count = checkboxes.length;
+  
+  // Get dropdown button
+  const dropdownButton = document.getElementById('translationMenuButton');
+  if (!dropdownButton) return;
+  
+  // Remove existing badge if any
+  const existingBadge = dropdownButton.querySelector('.translation-count-badge');
+  if (existingBadge) existingBadge.remove();
+  
+  // Create and add badge
+  const badge = document.createElement('span');
+  badge.className = 'translation-count-badge';
+  badge.textContent = count;
+  dropdownButton.appendChild(badge);
+  
+  // Create preview text of selected translations
+  const translationNames = Array.from(checkboxes).map(checkbox => {
+    const id = checkbox.value;
+    return TRANSLATIONS[id].split(" (")[0]; // Get just the short name
+  });
+  
+  // Add preview under surah name
+  const previewContainer = document.querySelector('.selected-translations-preview');
+  if (previewContainer) {
+    previewContainer.remove(); // Remove existing preview
+  }
+  
+  // Create new preview
+  const preview = document.createElement('span');
+  preview.className = 'selected-translations-preview';
+  preview.textContent = translationNames.join(', ');
+  
+  // Add after surah name
+  const surahName = document.getElementById('translation-surah-name');
+  if (surahName) {
+    surahName.parentNode.insertBefore(preview, surahName.nextSibling);
+  }
+}
+
+// Function to handle checkbox changes
+function handleTranslationCheckboxChange() {
+  // Get all selected checkboxes
+  const checkboxes = document.querySelectorAll('.translation-checkbox-item input:checked');
+  const selectedTranslations = Array.from(checkboxes).map(checkbox => checkbox.value);
+  
+  // Save to localStorage
+  localStorage.setItem('preferredTranslations', JSON.stringify(selectedTranslations));
+  
+  // Update badge count
+  updateTranslationCountBadge();
+  
+  // Reload surah with current selections (preserving position)
+  const surahSelector = document.getElementById('surah-selector');
+  if (surahSelector.value) {
+    loadSurah(surahSelector.value, true);
   }
 }
 
@@ -278,34 +357,31 @@ function highlightArabicVerse(verseNumber) {
   });
 }
 
+// loadSurah function to work with checkboxes instead of select
 async function loadSurah(surahNumber, preservePosition = false) {
   try {
     // Remember the current highlighted verse if preservePosition is true
     let currentHighlightedVerseNumber = null;
     
     if (preservePosition) {
-      // Check for highlighted verses in both panes
+      // [existing code to get highlighted verse]
       const highlightedArabicVerse = document.querySelector("#arabic-text .verse.highlight");
       const highlightedTranslationVerse = document.querySelector("#translation-text .verse.highlight");
       
-      // Get the verse number from whichever one is highlighted
       if (highlightedArabicVerse) {
         currentHighlightedVerseNumber = highlightedArabicVerse.dataset.verse;
       } else if (highlightedTranslationVerse) {
         currentHighlightedVerseNumber = highlightedTranslationVerse.dataset.verse;
       } else {
-        // If no verse is highlighted, try to get a visible verse instead
-        // First check translation pane for visible verses
+        // [existing code to find visible verse]
         const translationPane = document.getElementById('translation-text');
         const translationVerses = document.querySelectorAll("#translation-text .verse");
         
         if (translationPane && translationVerses.length > 0) {
-          // Find a verse that's currently visible in the viewport
           const paneRect = translationPane.getBoundingClientRect();
           
           for (const verse of translationVerses) {
             const verseRect = verse.getBoundingClientRect();
-            // Check if the verse is visible within the pane
             if (verseRect.top >= paneRect.top && 
                 verseRect.bottom <= paneRect.bottom) {
               currentHighlightedVerseNumber = verse.dataset.verse;
@@ -314,7 +390,6 @@ async function loadSurah(surahNumber, preservePosition = false) {
           }
         }
         
-        // If still no verse found, check Arabic pane
         if (!currentHighlightedVerseNumber) {
           const arabicPane = document.getElementById('arabic-text');
           const arabicVerses = document.querySelectorAll("#arabic-text .verse");
@@ -337,19 +412,21 @@ async function loadSurah(surahNumber, preservePosition = false) {
     
     showLoadingState();
     
-    // Get selected translations as an array
-    const translationSelect = document.getElementById('translation-select');
-    const selectedTranslations = Array.from(translationSelect.selectedOptions).map(option => option.value);
+    // Get selected translations from checkboxes
+    const checkboxes = document.querySelectorAll('.translation-checkbox-item input:checked');
+    const selectedTranslations = Array.from(checkboxes).map(checkbox => checkbox.value);
     
     // Default to a standard translation if nothing is selected
     if (selectedTranslations.length === 0) {
-      selectedTranslations.push('131'); // MAS Abdel Haleem as default
-      translationSelect.value = '131';
+      selectedTranslations.push('131'); // Default to MAS Abdel Haleem
+      const defaultCheckbox = document.querySelector(`input[value="131"]`);
+      if (defaultCheckbox) defaultCheckbox.checked = true;
     }
     
     // Join translations with comma for API call
     const translationIds = selectedTranslations.join(',');
     
+    // [Rest of the function remains the same]
     const [arabicResponse, translationResponse] = await Promise.all([
       fetch(`${API_BASE_URL}/quran/verses/uthmani?chapter_number=${surahNumber}`),
       fetch(`${API_BASE_URL}/verses/by_chapter/${surahNumber}?translations=${translationIds}&limit=999`)
@@ -369,7 +446,6 @@ async function loadSurah(surahNumber, preservePosition = false) {
     // After UI is updated, scroll to the previously highlighted verse if we have one
     if (preservePosition && currentHighlightedVerseNumber) {
       setTimeout(() => {
-        // Using highlightArabicVerse will now highlight and scroll both panes
         highlightArabicVerse(currentHighlightedVerseNumber);
       }, 300); // Increased timeout to ensure DOM has fully updated
     }
@@ -796,8 +872,9 @@ document.addEventListener('DOMContentLoaded', function() {
   setupMarkdownEditor();
   setupResizeHandles();
   setupTabs();
-  populateTranslationDropdown(); // Add this line to populate translations
-
+  populateTranslationDropdown(); // Now populates checkboxes
+  
+  // [Keep the rest of the initialization code]
   document.getElementById('surah-selector').addEventListener('change', function() {
     const surahNumber = this.value;
     if (surahNumber) {
@@ -806,16 +883,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Updated translation select event listener to handle multiple selections AND preserve position
-  document.getElementById('translation-select').addEventListener('change', function() {
-    saveSelectedTranslations();
-    const surahSelector = document.getElementById('surah-selector');
-    if (surahSelector.value) {
-      loadSurah(surahSelector.value, true); // Pass true to preserve position
-    }
-  });
+  // Remove the translation select event listener since we're using checkboxes now
+  // The event handlers are attached directly to each checkbox in populateTranslationDropdown
 
-  // Event listeners for directory selection and saving notes
+  // [Keep the rest of the event listeners]
   document.getElementById('select-directory').addEventListener('click', selectNotesDirectory);
   document.getElementById('save-all-notes').addEventListener('click', saveAllNotesToDirectory);
 
@@ -823,25 +894,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const lastDirectory = localStorage.getItem('notesDirectory');
   if (lastDirectory) {
     document.getElementById('directory-status').textContent = `Last used: ${lastDirectory}`;
-  }
-
-  // Load saved translation preferences
-  const savedTranslations = localStorage.getItem('preferredTranslations');
-  if (savedTranslations) {
-    try {
-      const translationIds = JSON.parse(savedTranslations);
-      const translationSelect = document.getElementById('translation-select');
-      
-      // Clear any default selections
-      Array.from(translationSelect.options).forEach(option => {
-        option.selected = translationIds.includes(option.value);
-      });
-    } catch (e) {
-      console.error('Error parsing saved translations', e);
-    }
-  } else {
-    // Set a default translation if nothing is saved
-    document.getElementById('translation-select').value = '131'; // Default to MAS Abdel Haleem
   }
 
   // Restore the last opened surah
